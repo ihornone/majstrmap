@@ -1,0 +1,56 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Автодеплой через воркер-міст: POST /internal/mint (ключ — секрет GitHub
+    # MINT_KEY) повертає короткоживучий access-токен; OAuth refresh-токен живе
+    # в D1 (таблиця oauth_tokens, рядок id=1) і ротується самим воркером.
+    # Міграції D1 у CI не запускаються: `pnpm db:migrate:remote` вручну перед деплоєм схеми.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify
+        run: |
+          pnpm typecheck
+          node scripts/test-bot.mjs
+          node scripts/test-bot.mjs tests/marker-placement.ts
+
+      - name: Build
+        run: pnpm build
+
+      - name: Mint Cloudflare access token
+        id: mint
+        run: |
+          TOKEN=$(curl -s -X POST "https://majstrmap.majstrmap.workers.dev/internal/mint" \
+            -H "Content-Type: application/json" \
+            -H "x-mint-key: ${{ secrets.MINT_KEY }}" \
+            | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('token','') if d.get('ok') else '')")
+          if [ -z "$TOKEN" ]; then
+            echo "::error::Token mint failed — worker /internal/mint returned no token. Check MINT_KEY secret and oauth_tokens row in D1."
+            exit 1
+          fi
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ steps.mint.outputs.token }}
+          CLOUDFLARE_ACCOUNT_ID: e37e774efbbf8c32fb3e6caf580b3989
+        run: npx wrangler deploy

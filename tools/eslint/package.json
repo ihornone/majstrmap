@@ -1,0 +1,11 @@
+{
+  "name": "majstrmap-eslint",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ізольоване lint-оточування: typescript-eslint 8 не підтримує TS 7 API, тому тут паралельно стоїть typescript 6 (рекомендований typescript-eslint підхід «side-by-side»). tsc проєкту лишається на TS 7.",
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.50.1"
+  }
+}

@@ -227,7 +227,8 @@ export async function handleApiRequest(request: Request, env: ApiEnv): Promise<R
   if (contactsMatch && request.method === 'GET') {
     const slug = contactsMatch[1];
     if (!slug) return Response.json({ ok: false, error: 'Master not found' }, { status: 404 });
-    if (request.headers.get('Origin') !== url.origin) return new Response(null, { status: 403 });
+    const origin = request.headers.get('Origin');
+    if (origin && origin !== url.origin) return new Response(null, { status: 403 });
     const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
     if (env.CONTACTS_LIMITER) {
       const { success } = await env.CONTACTS_LIMITER.limit({ key: ip });

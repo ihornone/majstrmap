@@ -7,7 +7,16 @@ export interface TurnstileEnv {
 interface SiteverifyResponse {
   success: boolean;
   'error-codes'?: string[];
+  hostname?: string;
+  action?: string;
+  cdata?: string;
 }
+
+const ALLOWED_HOSTNAMES = new Set([
+  'majstrmap.site',
+  'www.majstrmap.site',
+  'majstrmap.majstrmap.workers.dev',
+]);
 
 /**
  * Валідація Turnstile-токена через siteverify.
@@ -35,6 +44,13 @@ export async function verifyTurnstileToken(env: TurnstileEnv, token: unknown, ip
       // 4xx — очікувані відмови клієнта; логуємо без шуму, щоб не засмічувати моніторинг.
       console.info('[turnstile] verification rejected:', data['error-codes']?.join(',') || 'unknown');
       return false;
+    }
+    // Перевірка hostname для бойового секрету
+    if (env.TURNSTILE_SECRET_KEY !== '1x0000000000000000000000000000000AA' && data.hostname) {
+      if (!ALLOWED_HOSTNAMES.has(data.hostname)) {
+        console.warn('[turnstile] unexpected hostname:', data.hostname);
+        return false;
+      }
     }
     return true;
   } catch (err) {

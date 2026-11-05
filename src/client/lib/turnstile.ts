@@ -6,11 +6,12 @@
 
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
 const DEV_DUMMY_SITE_KEY = '2x00000000000000000000AB'; // always-pass, невидимий
+const PROD_SITE_KEY = '0x4AAAAAAF1AV5NpGBaN2XUr';
 const SCRIPT_LOAD_TIMEOUT_MS = 15_000;
 const TOKEN_TIMEOUT_MS = 120_000;
 
-// Публічний сайткей: prod — через VITE_TURNSTILE_SITE_KEY (deploy.yml), dev — тестовий dummy.
-const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || (import.meta.env.DEV ? DEV_DUMMY_SITE_KEY : '');
+// Публічний сайткей: пріоритет у VITE_TURNSTILE_SITE_KEY, fallback на прод-ключ віджета або dummy в dev
+const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || (import.meta.env.DEV ? DEV_DUMMY_SITE_KEY : PROD_SITE_KEY);
 
 interface TurnstileApi {
   render: (container: HTMLElement, params: Record<string, unknown>) => string;

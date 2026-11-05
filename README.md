@@ -37,7 +37,33 @@ pnpm db:seed:local       # категорії з scripts/seed.sql
 wrangler login
 npx wrangler secret put TELEGRAM_BOT_TOKEN
 npx wrangler secret put TELEGRAM_WEBHOOK_SECRET
+npx wrangler secret put TURNSTILE_SECRET_KEY
 ```
+
+## Turnstile (захист телефонів від скрейпінга)
+
+Публічне API **не віддає контакти** у відповідях `/api/masters*` — щоб бот не
+міг зібрати номери curl'ом. Контакти віддає лише `GET /api/masters/:slug/contacts`
+і лише за одноразовим [Turnstile](https://developers.cloudflare.com/turnstile/)-токеном
+(fail-closed, ліміт CONTACTS_LIMITER 10/хв + перевірка Origin). На клієнті
+віджет Managed з `appearance: 'interaction-only'`: звичайний користувач нічого
+не бачить, інтерактивна перевірка з'являється тільки коли сигнали Cloudflare
+підозрілі; розкриті контакти кешуються в сесії.
+
+Налаштування з нуля:
+
+1. Cloudflare Dashboard → **Turnstile → Add widget**: режим **Managed**,
+   домени `majstrmap.majstrmap.workers.dev` (+ свій домен, якщо додається).
+2. Секрет — у воркер: `npx wrangler secret put TURNSTILE_SECRET_KEY`.
+3. Сайткей (публічний) — у GitHub **Settings → Secrets and variables →
+   Actions → Variables** як `VITE_TURNSTILE_SITE_KEY` (читається на Build
+   кроці `deploy.yml`; без нього контакти в проді не розкриються).
+4. Локально все працює на тестових ключах уже з коробки: секрет
+   `1x0000000000000000000000000000000AA` у `.dev.vars` і dummy-сайткей у
+   `src/client/lib/turnstile.ts`.
+
+Коли секрет не заданий (локал/тести), воркер пропускає перевірку (fail-open).
+
 
 Після деплою зареєструйте вебхук Telegram на
 `https://<ваш-worker>/webhook/telegram/<випадковий-сегмент>` (сегмент —
@@ -69,17 +95,11 @@ npx wrangler deploy
 ```
 
 CI (`.github/workflows/ci.yml`) на кожен push/PR виконує
-`pnpm install --frozen-lockfile`, `pnpm typecheck` і `pnpm test:bot`.
+`pnpm install --frozen-lockfile`, `pnpm typecheck`, тести та збірку `pnpm build`.
 
-Автодеплой — `.github/workflows/deploy.yml`: push у `main` прогоняє
-верифікацію + build і деплоїть на Cloudflare Workers. Авторизація CI —
-через воркер-міст: `POST /internal/mint` (секрет GitHub `MINT_KEY`)
-повертає короткоживучий access-токен; OAuth refresh-токен живе в D1
-(`oauth_tokens`, рядок `id=1`) і ротується воркером сам (міграція 0007).
-Локальний `wrangler deploy` теж працює — але він деплоїть **vite-білд**
-(`dist/`, див. `.wrangler/deploy/config.json`), тому спершу `pnpm build`.
+Деплой виконується автоматично через інтеграцію Cloudflare з репозиторієм (Git Integration) або вручну командою `pnpm build && npx wrangler deploy`.
 
-Міграції D1 у CI не запускаються — перед деплоєм схеми виконайте
+Міграції D1 запускаються окремо за потреби — перед деплоєм нової схеми виконайте
 `pnpm db:migrate:remote` вручну.
 
 ## Архітектура
@@ -100,7 +120,9 @@ CI (`.github/workflows/ci.yml`) на кожен push/PR виконує
   `notification_outbox` (сповіщення пишуться тим самим batch, що й
   основна зміна; доставка — фоновим воркером з attempts/dead-letter).
 - `src/worker/routes/api.ts` — публічне JSON API: `/api/categories`
-  (кешується 1 год), `/api/regions/*`, `/api/masters`, `/api/metrics`
+  (кешується 1 год), `/api/regions/*`, `/api/masters` (без контактів),
+  `/api/masters/:slug/contacts` (лише з Turnstile-токеном,
+  CONTACTS_LIMITER + Origin), `/api/metrics`
   (native rate limit METRICS_LIMITER + in-memory фолбек), `/api/media/*`
   (валідація ключа + MEDIA_LIMITER, помилки апстріму → 502 JSON).
 - `src/worker/services/engagement.ts` — щотижневі дайджести підписок

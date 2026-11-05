@@ -26,6 +26,9 @@ jobs:
         run: pnpm typecheck
 
       - name: Bot workflow tests
-        run: node scripts/test-bot.mjs
+        run: |
+          node scripts/test-bot.mjs
+          node scripts/test-bot.mjs tests/marker-placement.ts
 
-      # Деплой — окремим workflow: .github/workflows/deploy.yml (push у main).
+      - name: Build
+        run: pnpm build

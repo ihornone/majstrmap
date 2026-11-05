@@ -2,13 +2,12 @@ import { BoundedMapTooltip, type MapHover } from '@/components/bounded-map-toolt
 import { SaveMasterButton } from '@/components/save-share';
 import { availabilityLabel } from '../../shared/master-tools';
 import { WorkConditionBadges } from '@/components/work-conditions';
-import { EMERGENCY_CATEGORIES } from '../../shared/work-conditions';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router';
 import { REGIONS_DATA } from '@/data/regions';
 import { REGION_CITIES } from '@/data/cities';
 import { fetchMasters, fetchRegionFilters, getAvatarUrl, type ApiMaster, type ApiCategory } from '@/lib/api';
-import { BOT_URL, botUrl } from '@/lib/links';
+import { BOT_URL } from '@/lib/links';
 import { placeMastersWithoutCollision, parseSvgPathToPoints, type PlacedMaster } from '@/lib/marker-placement';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
@@ -84,10 +83,6 @@ export function RegionPage() {
 
   const selectedCategory = searchParams.get('category') || 'all';
   const selectedCity = searchParams.get('city') || 'all';
-  const visits = searchParams.get('visits') === '1';
-  const sunday = searchParams.get('sunday') === '1';
-  const emergency = searchParams.get('emergency') === '1';
-  const [emergencyCategories,setEmergencyCategories] = useState<string[]>([]);
   const sortParam = searchParams.get('sort');
   const sortBy: SortKey = SORT_KEYS.includes(sortParam as SortKey) ? (sortParam as SortKey) : 'rating';
 
@@ -119,7 +114,7 @@ export function RegionPage() {
   const regionCities = useMemo(() => id ? REGION_CITIES[id] || [] : [], [id]);
 
   const updateFilters = useCallback(
-    (newParams: { category?: string; city?: string; sort?: string; visits?: boolean; sunday?: boolean; emergency?: boolean }) => {
+    (newParams: { category?: string; city?: string; sort?: string }) => {
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
         if (newParams.category !== undefined) {
@@ -134,7 +129,6 @@ export function RegionPage() {
           if (newParams.sort === 'rating') next.delete('sort');
           else next.set('sort', newParams.sort);
         }
-        for(const key of ['visits','sunday','emergency'] as const) if(newParams[key] !== undefined){if(newParams[key])next.set(key,'1');else next.delete(key);}
         return next;
       });
     },
@@ -145,14 +139,12 @@ export function RegionPage() {
     let cancelled = false;
     setCategories([]);
     setCityNames([]);
-    setEmergencyCategories([]);
     setFiltersError(false);
     if (id) fetchRegionFilters(id).then((res) => {
       if (cancelled) return;
       if (!res.ok) { setFiltersError(true); return; }
       setCategories(res.data.categories);
       setCityNames(res.data.cities);
-      setEmergencyCategories(res.data.emergencyCategories);
     });
     return () => { cancelled = true; };
   }, [id, reloadKey]);
@@ -192,7 +184,7 @@ export function RegionPage() {
       region: id,
       category: selectedCategory,
       city: selectedCity,
-      sort: sortBy, visits, sunday, emergency,
+      sort: sortBy,
     }).then((res) => {
       if (cancelled) return;
       if (!res.ok) {
@@ -207,7 +199,7 @@ export function RegionPage() {
       setLoading(false);
     });
     return () => { cancelled = true; };
-  }, [id, selectedCategory, selectedCity, sortBy, visits, sunday, emergency, region, regionCities, reloadKey]);
+  }, [id, selectedCategory, selectedCity, sortBy, region, regionCities, reloadKey]);
 
   useEffect(() => {
     if (region) {
@@ -394,7 +386,7 @@ export function RegionPage() {
             { }
             <Select
               value={selectedCategory}
-              onValueChange={(val) => updateFilters({ category: val, emergency: (val==='all'||EMERGENCY_CATEGORIES.includes(val)||emergencyCategories.includes(val))?emergency:false })}
+              onValueChange={(val) => updateFilters({ category: val })}
             >
               <SelectTrigger className="w-full h-9 text-xs font-bold rounded-xl bg-slate-50 border-slate-200">
                 <SelectValue placeholder="Оберіть категорію" />
@@ -442,10 +434,6 @@ export function RegionPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs pt-1">
-              {([['visits','З виїздом',visits],['sunday','У неділю',sunday],...((selectedCategory==='all'||EMERGENCY_CATEGORIES.includes(selectedCategory)||emergencyCategories.includes(selectedCategory))?[['emergency','Аварійний виклик',emergency]]:[])] as Array<['visits'|'sunday'|'emergency',string,boolean]>).map(([key,label,checked])=><label key={key} className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" className="accent-sky-500" checked={checked} onChange={e=>updateFilters({[key]:e.target.checked})} />{label}</label>)}
-            </div>
-            <a className="text-xs text-sky-700 underline" href={botUrl(`follow_${id}`)} target="_blank" rel="noreferrer">Повідомляти про нових майстрів у Telegram</a>
           </div>
 
           { }
@@ -493,7 +481,7 @@ export function RegionPage() {
                   <Button
                     variant="threedOutline"
                     size="sm"
-                    onClick={() => updateFilters({ category: 'all', city: 'all', visits:false,sunday:false,emergency:false })}
+                    onClick={() => updateFilters({ category: 'all', city: 'all' })}
                     className="text-xs font-bold"
                   >
                     Скинути фільтри
@@ -502,7 +490,6 @@ export function RegionPage() {
               </div>
             ) : (
               apiMasters.map((m) => {
-                const c = m.contacts || {};
                 return (
                   <Link
                     key={m.id}
@@ -557,13 +544,13 @@ export function RegionPage() {
                     </div>
                     {availabilityLabel(m.availability)&&<span className="text-xs text-sky-800">{availabilityLabel(m.availability)}</span>}
                     <WorkConditionBadges conditions={m.work_conditions} />
-                    {/* Кнопки прямого зв'язку */}
-                    {Object.values(c).some(Boolean) && <div
+                    {/* Кнопки зв'язку: номери приховані на сервері, розкриваються кліком (Turnstile) */}
+                    <div
                       className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <ContactButtons masterId={m.id} contacts={c} />
-                    </div>}
+                      <ContactButtons masterId={m.id} slug={m.slug} />
+                    </div>
                   </Link>
                 );
               })

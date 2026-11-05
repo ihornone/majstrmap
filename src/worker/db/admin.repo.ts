@@ -44,7 +44,6 @@ export class AdminRepository {
     const statements: D1PreparedStatement[] = [];
     const gate = "EXISTS (SELECT 1 FROM admin_requests WHERE id = ? AND master_id = ? AND status = 'pending')";
     if (approved) {
-      statements.push(this.db.prepare(`INSERT OR IGNORE INTO publication_events (master_id) SELECT id FROM masters WHERE id=? AND status='pending' AND ${gate}`).bind(req.master_id,req.id,req.master_id));
       statements.push(this.db.prepare(`UPDATE masters SET name=?, region_id=?, city=?, category_primary=?, category_secondary=?, contacts=?, avatar_key=?, description=?, about=?, experience_years=?, price_start=?, work_conditions=?, availability=?, channel_subscribed=1, status='active', updated_at=CURRENT_TIMESTAMP WHERE id=? AND status != 'banned' AND ${gate}`)
         .bind(draft.name,draft.region_id,draft.city,draft.category_primary,draft.category_secondary,JSON.stringify(draft.contacts),draft.avatar_key,draft.description,draft.about,draft.experience_years,draft.price_start ?? 0,JSON.stringify(draft.work_conditions || {}),JSON.stringify(draft.availability || {}),req.master_id,req.id,req.master_id));
       statements.push(this.db.prepare(`DELETE FROM services WHERE master_id=? AND ${gate}`).bind(req.master_id,req.id,req.master_id));

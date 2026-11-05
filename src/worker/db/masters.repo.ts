@@ -5,9 +5,6 @@ export interface GetMastersFilter {
   categoryId?: string;
   city?: string;
   sort?: 'rating' | 'reviews' | 'newest';
-  visits?: boolean;
-  sunday?: boolean;
-  emergency?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -33,10 +30,6 @@ export class MastersRepository {
       conditions.push('city = ?');
       bindings.push(filters.city);
     }
-
-    if (filters.visits) conditions.push("json_extract(work_conditions, '$.visit') IN ('city','nearby')");
-    if (filters.sunday) conditions.push("EXISTS (SELECT 1 FROM json_each(json_extract(work_conditions, '$.days')) WHERE value = 7)");
-    if (filters.emergency) conditions.push("json_extract(work_conditions, '$.emergency') = 1");
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
@@ -67,15 +60,14 @@ export class MastersRepository {
   }
 
   async getRegionFilters(regionId: string) {
-    const [cities, categories, emergency] = await this.db.batch([
+    const [cities, categories] = await this.db.batch([
       this.db.prepare("SELECT DISTINCT city FROM masters WHERE region_id = ? AND status = 'active' AND TRIM(city) != '' ORDER BY city").bind(regionId),
       this.db.prepare(`SELECT DISTINCT c.* FROM categories c JOIN masters m
         ON (c.id = m.category_primary OR c.id = m.category_secondary)
         WHERE m.region_id = ? AND m.status = 'active' AND c.approved = 1 ORDER BY c.name`).bind(regionId),
-      this.db.prepare("SELECT DISTINCT category_primary AS id FROM masters WHERE region_id=? AND status='active' AND json_extract(work_conditions, '$.emergency')=1 UNION SELECT DISTINCT category_secondary AS id FROM masters WHERE region_id=? AND status='active' AND category_secondary IS NOT NULL AND json_extract(work_conditions, '$.emergency')=1").bind(regionId,regionId),
     ]);
-    if (!cities?.results || !categories?.results || !emergency?.results) throw new Error('Failed to read region filters');
-    return { emergencyCategories: emergency.results.map(row=>String((row as {id:string}).id)), cities: cities.results.map(row => String((row as { city: string }).city)), categories: categories.results };
+    if (!cities?.results || !categories?.results) throw new Error('Failed to read region filters');
+    return { cities: cities.results.map(row => String((row as { city: string }).city)), categories: categories.results };
   }
 
   async getBySlug(slug: string): Promise<Master | null> {

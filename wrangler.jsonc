@@ -28,6 +28,11 @@
       "name": "MEDIA_LIMITER",
       "namespace_id": "1002",
       "simple": { "limit": 60, "period": 60 }
+    },
+    {
+      "name": "CONTACTS_LIMITER",
+      "namespace_id": "1003",
+      "simple": { "limit": 10, "period": 60 }
     }
   ],
   "triggers": {
@@ -36,9 +41,13 @@
       "*/5 * * * *"
     ]
   },
+  "routes": [
+    { "pattern": "www.majstrmap.site", "custom_domain": true },
+    { "pattern": "majstrmap.site", "custom_domain": true }
+  ],
   "vars": {
     "ENVIRONMENT": "production",
-    "PUBLIC_BASE_URL": "https://majstrmap.majstrmap.workers.dev",
+    "PUBLIC_BASE_URL": "https://www.majstrmap.site",
     "TELEGRAM_CHANNEL_USERNAME": "@ihornone_official",
     "ADMIN_TELEGRAM_IDS": "8331424769"
   }

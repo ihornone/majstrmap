@@ -8,7 +8,8 @@ import { REGIONS_DATA } from '@/data/regions';
 import { fetchMasterBySlug, type ApiMaster } from '@/lib/api';
 import { botUrl } from '@/lib/links';
 import { Navbar } from '@/components/navbar';
-import { ContactButtons } from '@/components/contact-buttons';
+import { ContactButtons, getCachedContacts } from '@/components/contact-buttons';
+import type { MasterContacts } from '../../shared/contacts';
 import { Button } from '@/components/ui/button';
 import { MasterAvatar } from '@/components/avatar';
 import {
@@ -33,6 +34,9 @@ export function MasterPage() {
   const [reloadKey, setReloadKey] = useState(0);
   const contactBlock=useRef<HTMLDivElement>(null);
   const [showStickyContacts,setShowStickyContacts]=useState(false);
+  // Контакти більше не приходять в анкеті (захист від скрейпінга): вони розкриваються
+  // через Turnstile у ContactButtons, звідси лише підтягуємо вже розкриті.
+  const [revealedContacts,setRevealedContacts]=useState<MasterContacts|undefined>(()=>getCachedContacts(slug??''));
   const [showAllReviews, setShowAllReviews] = useState(false);
 
   useEffect(()=>{
@@ -41,6 +45,15 @@ export function MasterPage() {
     const observer=new IntersectionObserver((entries)=>setShowStickyContacts(!(entries[0]?.isIntersecting ?? true)));
     observer.observe(node);return()=>observer.disconnect();
   },[master?.id]);
+
+  useEffect(()=>{
+    const onReveal=(e:Event)=>{
+      const revealed=(e as CustomEvent<string>).detail;
+      if(revealed===slug)setRevealedContacts(getCachedContacts(revealed));
+    };
+    window.addEventListener('majstrmap-contacts',onReveal);
+    return()=>window.removeEventListener('majstrmap-contacts',onReveal);
+  },[slug]);
 
   useEffect(() => {
     if (!slug) {
@@ -136,7 +149,7 @@ export function MasterPage() {
   }
 
   const region = REGIONS_DATA[master.region_id];
-  const contacts = master.contacts || {};
+  const contacts = revealedContacts ?? {};
   const services = master.services || [];
   const reviews = master.reviews || [];
 
@@ -206,7 +219,7 @@ export function MasterPage() {
               <WorkConditionBadges conditions={master.work_conditions} />
               <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:flex-wrap sm:w-auto [&_button]:w-full sm:[&_button]:w-auto [&_button]:px-2 sm:[&_button]:px-4 [&_button]:text-xs"><SaveMasterButton slug={master.slug}/><ShareMasterButton slug={master.slug} name={master.name}/></div>
               { }
-              <div ref={contactBlock} className="w-full"><ContactButtons masterId={master.id} contacts={contacts} className="pt-1 w-full justify-start" /></div>
+              <div ref={contactBlock} className="w-full"><ContactButtons masterId={master.id} slug={master.slug} className="pt-1 w-full justify-start" /></div>
             </div>
           </div>
 

@@ -7,13 +7,16 @@ import { MastersRepository } from '../db/masters.repo';
 import { ServicesRepository } from '../db/services.repo';
 import { ReviewsRepository } from '../db/reviews.repo';
 import { serveMedia } from '../services/media';
+import { verifyTurnstileToken } from '../services/turnstile';
 
 export interface ApiEnv {
   DB: D1Database;
   METRICS_LIMITER?: RateLimit;
   MEDIA_LIMITER?: RateLimit;
-  BUCKET?: R2Bucket;  
+  CONTACTS_LIMITER?: RateLimit;
+  BUCKET?: R2Bucket;
   TELEGRAM_BOT_TOKEN?: string;
+  TURNSTILE_SECRET_KEY?: string;
 }
 
 const MAX_PAGE_SIZE = 100;
@@ -36,6 +39,7 @@ function createInMemoryRateLimiter(limit: number, windowMs: number) {
 }
 const metricsRateLimited = createInMemoryRateLimiter(30, 60_000);
 const mediaRateLimited = createInMemoryRateLimiter(60, 60_000);
+const contactsRateLimited = createInMemoryRateLimiter(10, 60_000);
 
 function safeParseJson<T>(raw: string | null | undefined, fallback: T): T {
   if (!raw) return fallback;
@@ -57,7 +61,6 @@ function toPublicMaster(m: Master, categoryName?: string, priceMin?: number | nu
     category_secondary: m.category_secondary,
     category_primary_name: categoryName || m.category_primary,
     price_min: priceMin ?? null,
-    contacts: safeParseJson(m.contacts, {}),
     avatar_key: m.avatar_key,
     description: m.description,
     about: m.about,
@@ -169,9 +172,6 @@ export async function handleApiRequest(request: Request, env: ApiEnv): Promise<R
       sort,
       limit,
       offset,
-      visits: url.searchParams.get('visits') === '1',
-      sunday: url.searchParams.get('sunday') === '1',
-      emergency: url.searchParams.get('emergency') === '1',
     });
 
     const categoryNames = new Map((await new CategoriesRepository(env.DB).listApproved()).map((c) => [c.id, c.name]));
@@ -218,6 +218,34 @@ export async function handleApiRequest(request: Request, env: ApiEnv): Promise<R
     return Response.json({
       ok: true,
       masters: masters.map((m) => toPublicMaster(m, categoryNames.get(m.category_primary), priceMinByMaster.get(m.id) ?? null)),
+    });
+  }
+
+  // Контакти (телефони тощо) віддаємо лише за валідним Turnstile-токеном:
+  // у списках вище їх немає, тож бот не може зібрати номери curl'ом.
+  const contactsMatch = path.match(/^\/api\/masters\/([a-zA-Z0-9_-]+)\/contacts$/);
+  if (contactsMatch && request.method === 'GET') {
+    const slug = contactsMatch[1];
+    if (!slug) return Response.json({ ok: false, error: 'Master not found' }, { status: 404 });
+    if (request.headers.get('Origin') !== url.origin) return new Response(null, { status: 403 });
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    if (env.CONTACTS_LIMITER) {
+      const { success } = await env.CONTACTS_LIMITER.limit({ key: ip });
+      if (!success) return new Response(null, { status: 429 });
+    } else if (contactsRateLimited(ip)) {
+      return new Response(null, { status: 429 });
+    }
+    const token = request.headers.get('cf-turnstile-token') ?? url.searchParams.get('cf_token');
+    const verified = await verifyTurnstileToken(env, token, ip === 'unknown' ? null : ip);
+    if (!verified) return Response.json({ ok: false, error: 'turnstile_failed' }, { status: 403 });
+    const master = await new MastersRepository(env.DB).getBySlug(slug);
+    if (!master) {
+      return Response.json({ ok: false, error: 'Master not found' }, { status: 404 });
+    }
+    return Response.json({ ok: true, contacts: safeParseJson(master.contacts, {}) }, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
     });
   }
 

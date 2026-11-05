@@ -77,7 +77,7 @@ export async function fetchRegionStats(): Promise<ApiResult<Record<string, numbe
   return { ok: true, data: res.data.stats || {} };
 }
 
-export async function fetchRegionFilters(regionId: string): Promise<ApiResult<{ cities: string[]; categories: ApiCategory[]; emergencyCategories: string[] }>> {
+export async function fetchRegionFilters(regionId: string): Promise<ApiResult<{ cities: string[]; categories: ApiCategory[]; emergencyCategories?: string[] }>> {
   const res = await request<{ ok: boolean; cities?: string[]; categories?: ApiCategory[]; emergencyCategories?: string[] }>(
     `/api/regions/${encodeURIComponent(regionId)}/filters`
   );
@@ -93,14 +93,10 @@ export async function fetchMasters(params: {
   category?: string;
   city?: string;
   sort?: string;
-  visits?: boolean;
-  sunday?: boolean;
-  emergency?: boolean;
   limit?: number;
   offset?: number;
 }): Promise<ApiResult<{ masters: ApiMaster[]; total: number }>> {
   const query = new URLSearchParams();
-  for (const key of ['visits','sunday','emergency'] as const) if (params[key]) query.set(key,'1');
   if (params.region) query.set('region', params.region);
   if (params.category && params.category !== 'all') query.set('category', params.category);
   if (params.city && params.city !== 'all') query.set('city', params.city);
@@ -117,6 +113,14 @@ export async function fetchMasterBySlug(slug: string): Promise<ApiResult<ApiMast
   const res = await request<{ ok: boolean; master?: ApiMaster }>(`/api/masters/${encodeURIComponent(slug)}`);
   if (!res.ok) return res;
   return { ok: true, data: res.data.master as ApiMaster };
+}
+
+export async function fetchMasterContacts(slug: string, token: string): Promise<ApiResult<{ contacts: MasterContacts }>> {
+  const res = await request<{ ok: boolean; contacts?: MasterContacts }>(`/api/masters/${encodeURIComponent(slug)}/contacts`, {
+    headers: { 'cf-turnstile-token': token },
+  });
+  if (!res.ok) return res;
+  return { ok: true, data: { contacts: res.data.contacts || {} } };
 }
 
 export async function fetchMastersBySlugs(slugs: string[]): Promise<ApiResult<{ masters: ApiMaster[] }>> {

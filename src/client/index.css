@@ -46,6 +46,9 @@ html, body, #root {
   --ring: #0ea5e9;                  
   --radius: 0.75rem;                
 
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);                
+
   --map-region: oklch(44.3% 0.11 240.79);
   --map-region-hover: oklch(50% 0.134 242.748);
   --map-region-selected: oklch(39.1% 0.09 240.875);

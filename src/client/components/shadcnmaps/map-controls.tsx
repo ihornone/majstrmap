@@ -44,7 +44,7 @@ export function MapControls({
         disabled={atMaxZoom}
         title='Збільшити масштаб (+)'
         aria-label='Збільшити масштаб'
-        className='h-11 w-11 rounded-xl'
+        className='h-11 w-11'
       >
         <Plus className='w-5 h-5 stroke-[2.5]' />
       </Button>
@@ -57,7 +57,7 @@ export function MapControls({
         disabled={atMinZoom}
         title='Зменшити масштаб (−)'
         aria-label='Зменшити масштаб'
-        className='h-11 w-11 rounded-xl'
+        className='h-11 w-11'
       >
         <Minus className='w-5 h-5 stroke-[2.5]' />
       </Button>
@@ -69,7 +69,7 @@ export function MapControls({
         onClick={resetZoom}
         title='Скинути до повного вигляду'
         aria-label='Скинути до повного вигляду'
-        className='h-11 w-11 rounded-xl'
+        className='h-11 w-11'
       >
         <RotateCcw className='w-4 h-4 stroke-[2.5]' />
       </Button>

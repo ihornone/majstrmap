@@ -39,15 +39,15 @@ export function BottomBar({
       type="button"
       onClick={handleClick}
       className={cn(
-        'w-full bg-[#0ea5e9] hover:bg-[#0284c7] text-white py-2 sm:py-2.5 px-6 rounded-t-2xl sm:rounded-t-3xl flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm uppercase tracking-wider transition-colors duration-150 cursor-pointer pointer-events-auto no-scrollbar',
+        'group w-full bg-[#0ea5e9] hover:bg-[#0284c7] active:scale-[0.99] text-white py-2.5 px-6 rounded-t-2xl sm:rounded-t-3xl flex items-center justify-center gap-2 font-semibold text-xs sm:text-sm tracking-wide transition-[background-color,transform] duration-150 ease-out cursor-pointer pointer-events-auto no-scrollbar',
         className
       )}
     >
       <span>{isScrolledDown ? 'До карти' : 'Про проєкт та реєстрація майстра'}</span>
       {isScrolledDown ? (
-        <ChevronUp className="w-4 h-4 stroke-[2.5] animate-bounce" />
+        <ChevronUp className="w-4 h-4 stroke-[2.5] transition-transform duration-200 ease-out group-hover:-translate-y-0.5" />
       ) : (
-        <ChevronDown className="w-4 h-4 stroke-[2.5] animate-bounce" />
+        <ChevronDown className="w-4 h-4 stroke-[2.5] transition-transform duration-200 ease-out group-hover:translate-y-0.5" />
       )}
     </button>
   );

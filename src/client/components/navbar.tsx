@@ -93,7 +93,10 @@ export function Navbar({ onAddMaster, className, isFloating = false }: NavbarPro
 
         { }
         {isMobileMenuOpen && (
-          <div id="mobile-menu" className="sm:hidden flex flex-col gap-2.5 pt-3 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div
+            id="mobile-menu"
+            className="sm:hidden flex flex-col gap-2.5 pt-3 border-t border-slate-100 origin-top animate-in fade-in zoom-in-98 slide-in-from-top-2 duration-150 ease-out"
+          >
             <Button
               variant="threed"
               size="default"

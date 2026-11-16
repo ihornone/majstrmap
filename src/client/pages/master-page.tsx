@@ -12,6 +12,7 @@ import { ContactButtons, getCachedContacts } from '@/components/contact-buttons'
 import type { MasterContacts } from '../../shared/contacts';
 import { Button } from '@/components/ui/button';
 import { MasterAvatar } from '@/components/avatar';
+import { formatPlural } from '@/lib/utils';
 import {
   ArrowLeft,
   RefreshCcw,
@@ -190,7 +191,9 @@ export function MasterPage() {
                   <div className="flex items-center gap-1 font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md">
                     <Star className="w-3.5 h-3.5 fill-current" />
                     <span>{master.rating.toFixed(1)}</span>
-                    <span className="text-slate-400 font-normal">({master.reviews_count} відгуків)</span>
+                    <span className="text-slate-400 font-normal">
+                      ({formatPlural(master.reviews_count, { one: 'відгук', few: 'відгуки', many: 'відгуків' })})
+                    </span>
                   </div>
                 ) : (
                   <span className="text-slate-500">Ще немає відгуків</span>
@@ -206,7 +209,9 @@ export function MasterPage() {
                 <span className="hidden sm:inline">•</span>
                 <div className="flex items-center gap-1 font-medium">
                   <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Досвід {master.experience_years} р.</span>
+                  <span>
+                    Досвід {formatPlural(master.experience_years, { one: 'рік', few: 'роки', many: 'років' })}
+                  </span>
                 </div>
               </div>
 

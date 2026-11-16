@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router';
+import { Toaster } from 'sonner';
 import { HomePage } from '@/pages/home-page';
 
 const RegionPage = lazy(() =>
@@ -43,6 +44,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <Toaster position="top-center" richColors closeButton />
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/saved" element={<SavedPage />} />

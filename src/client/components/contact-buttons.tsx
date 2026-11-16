@@ -72,15 +72,15 @@ export function ContactButtons({ contacts, slug, className, masterId }: { contac
   }));
   if (!links.length) return null;
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+    <div className={cn('flex flex-wrap items-center gap-2 animate-in fade-in duration-200', className)}>
       {links.map(({kind, value, href}) => (
         <Button key={`${kind}:${href}`} asChild variant={kind === 'phone' ? 'threed' : 'threedIcon'}
           size={kind === 'phone' ? 'default' : 'icon'}
           className={kind === 'phone' ? 'h-11 max-w-full px-4 text-xs sm:text-sm' : 'h-11 w-11 p-2 shrink-0'}>
           <a onClick={()=>{if(masterId)recordMetric(masterId,'contact',kind);}} href={href} title={`${CONTACT_LABELS[kind]}: ${value}`} aria-label={`${CONTACT_LABELS[kind]}: ${value}`}
-            target={kind === 'phone' || kind === 'viber' ? undefined : '_blank'} rel="noopener noreferrer">
-            {kind === 'phone' ? <><Phone className="w-4 h-4" /><span>{value}</span></> : kind === 'website' ? <Globe className="!w-6 !h-6 text-[#0ea5e9]" /> :
-              <img src={`/${kind}.svg`} alt="" aria-hidden="true" className="w-6 h-6 object-contain" width={24} height={24} />}
+            target={kind === 'phone' || kind === 'viber' ? undefined : '_blank'} rel="noopener noreferrer" className="overflow-hidden">
+            {kind === 'phone' ? <><Phone className="w-4 h-4 shrink-0" /><span className="truncate max-w-[220px] sm:max-w-xs">{value}</span></> : kind === 'website' ? <Globe className="!w-6 !h-6 text-[#0ea5e9] shrink-0" /> :
+              <img src={`/${kind}.svg`} alt="" aria-hidden="true" className="w-6 h-6 object-contain shrink-0" width={24} height={24} />}
           </a>
         </Button>
       ))}

@@ -16,5 +16,24 @@ export function BoundedMapTooltip({hover,containerRef}:{hover:MapHover;container
  const left=Math.max(8,Math.min(hover.x+12,box.panelWidth-width-8));
  const preferredTop=hover.y-height-12>=8?hover.y-height-12:hover.y+12;
  const top=Math.max(8,Math.min(preferredTop,box.panelHeight-height-8));
- return <div ref={ref} role="tooltip" data-slot="master-hover-tooltip" className="absolute z-40 pointer-events-none bg-slate-900 text-white rounded-lg px-3 py-2 text-xs leading-snug break-words overflow-hidden" style={{left,top,maxWidth:box.panelWidth?Math.min(280,Math.max(16,box.panelWidth-16)):280,maxHeight:box.panelHeight?Math.max(16,box.panelHeight-16):undefined,visibility:box.panelWidth?'visible':'hidden'}}><div className="font-semibold line-clamp-2">{hover.name}</div><div className="text-slate-300 line-clamp-2">{hover.city}</div></div>;
+ return (
+   <div
+     ref={ref}
+     role="tooltip"
+     data-slot="master-hover-tooltip"
+     className="absolute z-40 pointer-events-none bg-slate-900/95 backdrop-blur-xs text-white rounded-xl px-3 py-2 text-xs leading-snug break-words overflow-hidden shadow-lg border border-slate-700/50 transition-[opacity,transform] duration-120 ease-out"
+     style={{
+       left,
+       top,
+       maxWidth: box.panelWidth ? Math.min(280, Math.max(16, box.panelWidth - 16)) : 280,
+       maxHeight: box.panelHeight ? Math.max(16, box.panelHeight - 16) : undefined,
+       visibility: box.panelWidth ? 'visible' : 'hidden',
+       opacity: box.panelWidth ? 1 : 0,
+       transform: box.panelWidth ? 'scale(1)' : 'scale(0.96)',
+     }}
+   >
+     <div className="font-semibold line-clamp-2">{hover.name}</div>
+     <div className="text-slate-300 line-clamp-2">{hover.city}</div>
+   </div>
+ );
 }

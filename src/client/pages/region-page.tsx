@@ -9,6 +9,7 @@ import { REGION_CITIES } from '@/data/cities';
 import { fetchMasters, fetchRegionFilters, getAvatarUrl, type ApiMaster, type ApiCategory } from '@/lib/api';
 import { BOT_URL } from '@/lib/links';
 import { placeMastersWithoutCollision, parseSvgPathToPoints, type PlacedMaster } from '@/lib/marker-placement';
+import { getInitials, formatPlural } from '@/lib/utils';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { ContactButtons } from '@/components/contact-buttons';
@@ -52,15 +53,6 @@ function initialsAvatarColor(name: string): string {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length] ?? '#0ea5e9';
-}
-
-function getInitials(name: string): string {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0] ?? '';
-  if (parts.length === 1) return first.slice(0, 2).toUpperCase();
-  const second = parts[1] ?? '';
-  return (first.charAt(0) + second.charAt(0)).toUpperCase();
 }
 
 function parseRegionViewBox(viewBox: string, path: string): { x: number; y: number; width: number; height: number } {
@@ -264,7 +256,7 @@ export function RegionPage() {
       { }
       <main className="w-full flex-1 flex flex-col lg:flex-row gap-5 items-stretch min-h-0 lg:overflow-hidden">
         { }
-        <div ref={mapPanelRef} onWheel={()=>scheduleMapHover(null)} onPointerDown={()=>scheduleMapHover(null)} onPointerLeave={()=>scheduleMapHover(null)} className="w-full lg:w-[60%] relative flex items-center justify-center select-none h-[340px] sm:h-[420px] lg:h-full min-h-[300px] overflow-hidden no-scrollbar">
+        <div ref={mapPanelRef} onWheel={()=>scheduleMapHover(null)} onPointerDown={()=>scheduleMapHover(null)} onPointerLeave={()=>scheduleMapHover(null)} className="w-full lg:w-[60%] relative flex items-center justify-center select-none h-[42vh] sm:h-[48vh] lg:h-full min-h-[260px] max-h-[500px] lg:max-h-none overflow-hidden no-scrollbar">
           <RegionMap
             data={singleRegionMapData}
             enableZoom={true}
@@ -489,12 +481,13 @@ export function RegionPage() {
                 </div>
               </div>
             ) : (
-              apiMasters.map((m) => {
+              apiMasters.map((m, idx) => {
                 return (
                   <Link
                     key={m.id}
                     to={`/master/${m.slug}`}
-                    className="bg-white border border-slate-200 rounded-xl p-3.5 flex flex-col gap-2 shadow-none cursor-pointer shrink-0 hover:border-sky-300 transition-colors"
+                    style={{ animationDelay: `${Math.min(idx * 35, 250)}ms` }}
+                    className="bg-white border border-slate-200 rounded-xl p-3.5 flex flex-col gap-2 shadow-none cursor-pointer shrink-0 hover:border-sky-300 transition-[border-color,transform] duration-150 active:scale-[0.99] animate-in fade-in slide-in-from-bottom-1 duration-200"
                   >
                     {/* Верх картки з фото/аватаркою */}
                     <div className="flex items-start justify-between gap-3">
@@ -535,7 +528,7 @@ export function RegionPage() {
                         {m.city}
                       </span>
                       <span>•</span>
-                      <span>Досвід: <strong>{m.experience_years} р.</strong></span>
+                      <span>Досвід: <strong>{formatPlural(m.experience_years, { one: 'рік', few: 'роки', many: 'років' })}</strong></span>
                     </div>
 
                     <div className="flex items-center justify-between gap-3">

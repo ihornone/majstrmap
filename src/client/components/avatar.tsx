@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils';
+import { cn, getInitials } from '@/lib/utils';
 import { getAvatarUrl } from '@/lib/api';
 
 interface AvatarProps {
@@ -6,15 +6,6 @@ interface AvatarProps {
   avatarKey?: string | null;
   className?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
-}
-
-function getInitials(name: string): string {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0] ?? '';
-  if (parts.length === 1) return first.slice(0, 2).toUpperCase();
-  const second = parts[1] ?? '';
-  return (first.charAt(0) + second.charAt(0)).toUpperCase();
 }
 
 function getColorFromName(name: string): string {

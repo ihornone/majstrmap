@@ -5,7 +5,7 @@ import { ArrowLeft, MapPin } from 'lucide-react';
 
 export function NotFoundPage() {
   useEffect(() => {
-    document.title = 'Сторінку не знайдено | MajstrMap';
+    document.title = 'Сторінку не знайдено | MasterMap';
   }, []);
 
   return (

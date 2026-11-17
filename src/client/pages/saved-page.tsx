@@ -10,7 +10,7 @@ import { minServicePrice } from '../../shared/pricing';
 
 export function SavedPage() {
   useEffect(() => {
-    document.title = 'Збережені майстри | MajstrMap';
+    document.title = 'Збережені майстри | MasterMap';
   }, []);
 
   const [slugs, setSlugs] = useState(getSavedSlugs);

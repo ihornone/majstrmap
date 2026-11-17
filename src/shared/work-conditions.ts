@@ -57,7 +57,7 @@ export function parseWorkConditions(text: string): WorkConditions {
 }
 export function workConditionRows(w: WorkConditions = {}): Array<[string,string]> {
   return [
-    ['Виїзд',w.visit==='none'?'Без виїзду':w.visit==='city'?'У межах міста':w.visit==='nearby'?`Місто й околиці, до ${w.radius_km} км`:'Уточніть у майстра'],
+    ['Виїзд',w.visit==='none'?'Без виїзду':(w.visit==='city'||w.visit==='nearby')?'У межах міста':'Уточніть у майстра'],
     ['Дні роботи',w.days?.length?w.days.map(d=>DAY_NAMES[d-1]).join(', '):'Уточніть у майстра'],
     ['Години',w.hours||'Уточніть у майстра'],
     ['Аварійний виклик',w.emergency===true?`Так${w.emergency_hours ? `, ${w.emergency_hours}`:''}`:w.emergency===false?'Ні':'Уточніть у майстра'],

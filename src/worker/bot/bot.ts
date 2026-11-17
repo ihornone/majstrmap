@@ -8,6 +8,7 @@ import { CategoriesRepository } from '../db/categories.repo';
 import { SessionsRepository } from '../db/sessions.repo';
 import { AdminRepository } from '../db/admin.repo';
 import { ClientRepository } from '../db/client.repo';
+import { PortfolioRepository } from '../db/portfolio.repo';
 
 import { clientComposer } from './handlers/client';
 import { startComposer } from './handlers/start';
@@ -15,6 +16,7 @@ import { registrationComposer } from './handlers/registration';
 import { masterComposer } from './handlers/master';
 import { reviewComposer } from './handlers/review';
 import { adminComposer } from './handlers/admin';
+import { portfolioComposer } from './handlers/portfolio';
 import { unpackCallback } from './callbacks';
 
 let cachedBotInfo: Bot<BotCustomContext>['botInfo'] | undefined;
@@ -38,6 +40,7 @@ export function createBot(env: Env, waitUntil?: (promise: Promise<unknown>) => v
       sessions: new SessionsRepository(env.DB),
       admin: new AdminRepository(env.DB),
       client: new ClientRepository(env.DB),
+      portfolio: new PortfolioRepository(env.DB),
     };
     await next();
   });
@@ -82,6 +85,7 @@ export function createBot(env: Env, waitUntil?: (promise: Promise<unknown>) => v
   bot.use(clientComposer);
   bot.use(startComposer);
   bot.use(registrationComposer);
+  bot.use(portfolioComposer);
   bot.use(masterComposer);
   bot.use(reviewComposer);
   bot.use(adminComposer);

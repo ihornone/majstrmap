@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { BOT_URL } from '@/lib/links';
 import { Send, UserPlus, Menu, X, Heart } from 'lucide-react';
@@ -13,6 +13,7 @@ interface NavbarProps {
 
 export function Navbar({ onAddMaster, className, isFloating = false }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleAddMaster = () => {
     setIsMobileMenuOpen(false);
@@ -35,18 +36,27 @@ export function Navbar({ onAddMaster, className, isFloating = false }: NavbarPro
         { }
         <div className="flex items-center justify-between gap-3">
           { }
-          <Link
-            to="/"
-            className="flex items-center cursor-pointer text-left"
-            onClick={() => setIsMobileMenuOpen(false)}
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              navigate('/');
+            }}
+            className="flex items-center cursor-pointer text-left focus:outline-hidden"
           >
             <span className="font-semibold text-2xl tracking-tight text-slate-900">
-              Majstr<span className="text-[#0ea5e9]">Map</span>
+              Master<span className="text-[#0ea5e9]">Map</span>
             </span>
-          </Link>
+          </button>
 
-          <Button variant="threedIcon" size="icon" asChild className="ml-auto">
-            <Link to="/saved" aria-label="Збережені майстри" title="Збережені майстри"><Heart/></Link>
+          <Button
+            variant="threedIcon"
+            size="icon"
+            onClick={() => navigate('/saved')}
+            aria-label="Збережені майстри"
+            className="ml-auto cursor-pointer"
+          >
+            <Heart />
           </Button>
           { }
           <div className="hidden sm:flex items-center gap-2 sm:gap-2.5">

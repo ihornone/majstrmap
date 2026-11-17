@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export function PrivacyPage() {
   useEffect(() => {
-    document.title = 'Політика конфіденційності | MajstrMap';
+    document.title = 'Політика конфіденційності | MasterMap';
   }, []);
 
   return (
@@ -16,65 +16,67 @@ export function PrivacyPage() {
           <ArrowLeft className="w-3.5 h-3.5" />
           На головну
         </Link>
-        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-2">Політика конфіденційності</h1>
-        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-8">
-          Це шаблонний текст для попереднього перегляду. Перед публікацією його потрібно перевірити та доопрацювати.
-        </p>
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-6">Політика конфіденційності</h1>
 
         <div className="flex flex-col gap-6 text-sm text-slate-600 leading-relaxed">
           <section className="flex flex-col gap-2">
             <h2 className="text-lg font-semibold text-slate-900">1. Які дані ми обробляємо</h2>
             <ul className="list-disc pl-5 flex flex-col gap-1.5">
               <li>
-                <strong>Дані анкет майстрів:</strong> ім'я, місто й область, категорія та послуги, ціни, опис,
-                досвід і контакти (телефон, Telegram тощо), які майстер сам надає через Telegram-бота.
+                <strong>Дані анкет майстрів:</strong> ім'я/псевдонім, місто та область, категорія й перелік послуг, ціни, опис,
+                досвід роботи та канали зв'язку (телефон, Telegram-нік тощо), які майстер добровільно надає через офіційного бота <a href="https://t.me/mastermap_ua_bot" target="_blank" rel="noopener noreferrer" className="text-sky-700 font-semibold underline">@mastermap_ua_bot</a>.
               </li>
               <li>
-                <strong>Фото/avatar:</strong> зображення, які майстер завантажує для своєї картки.
+                <strong>Портфоліо та фото робіт:</strong> зображення, які майстер завантажує для ілюстрації виконаних замовлень (зберігаються в захищеному сховищі Cloudflare R2).
               </li>
               <li>
-                <strong>Технічні метрики:</strong> анонімна статистика переглядів карток і звернень до майстрів
-                (без створення рекламних профілів).
+                <strong>Технічні метрики:</strong> знеособлена статистика переглядів карток та відкриття контактів для захисту від ботів і розуміння попиту (без продажу третім особам та рекламного трекінгу).
               </li>
               <li>
-                <strong>Локальні дані браузера:</strong> список збережених майстрів у localStorage вашого браузера —
-                він не надсилається на сервер.
+                <strong>Локальні дані браузера:</strong> список збережених майстрів зберігається суто локально в браузері користувача (localStorage) і не передається на сервер.
               </li>
             </ul>
           </section>
 
           <section className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold text-slate-900">2. Навіщо ці дані</h2>
+            <h2 className="text-lg font-semibold text-slate-900">2. Безпека геоданих (Zero Geo-Leak) та захист контактів</h2>
             <p>
-              Дані публікуються в каталозі, щоб клієнти могли знайти майстра та зв'язатися з ним напряму.
-              Метрики потрібні майстрам для бачення статистики переглядів і звернень. Ми не продаємо дані
-              третім особам і не показуємо рекламу.
+              Ми не збираємо і принципово не публікуємо точні адреси (вулиці, номери будинків чи квартир), а також координати фізичного перебування користувачів чи пристроїв. В анкеті відображається виключно місто або умовний район.
+            </p>
+            <p>
+              Усі завантажені фотографії портфоліо та аватарів проходять автоматичне очищення від метаданих (EXIF, геотеги GPS).
+            </p>
+            <p>
+              Контакти майстрів надійно захищені від спам-ботів та автоматичного парсингу інтелектуальною системою Cloudflare Turnstile та криптографічними токенами розкриття.
             </p>
           </section>
 
           <section className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold text-slate-900">3. Telegram-бот і повідомлення</h2>
+            <h2 className="text-lg font-semibold text-slate-900">3. Мета обробки даних</h2>
             <p>
-              Реєстрація та сповіщення про нових майстрів відбуваються через Telegram. При підписці на сповіщення
-              Telegram передає боту ваш чат-ID — він використовується лише для надсилання цих сповіщень.
+              Дані публікуються у каталозі MasterMap виключно для того, щоб клієнти могли знайти майстра та напряму зв'язатися з ним для замовлення послуг. Ми не продаємо персональні дані, не передаємо їх рекламним мережам і не займаємося спам-розсилками.
             </p>
           </section>
 
           <section className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold text-slate-900">4. Ваші права</h2>
+            <h2 className="text-lg font-semibold text-slate-900">4. Telegram-бот та безпека взаємодії</h2>
             <p>
-              Майстер може переглянути, змінити або повністю видалити свою анкету в будь-який момент через
-              Telegram-бота. Інші запити щодо даних — на{' '}
-              <a href="mailto:support@majstrmap.ua" className="text-sky-700 underline font-semibold">support@majstrmap.ua</a>.
+              Керування анкетою та підписка на сповіщення здійснюються через офіційного бота <a href="https://t.me/mastermap_ua_bot" target="_blank" rel="noopener noreferrer" className="text-sky-700 font-semibold underline">@mastermap_ua_bot</a>. Чат-ID використовується суто для сервісних повідомлень платформи й ніколи не передається стороннім особам чи іншим майстрам.
             </p>
           </section>
 
           <section className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold text-slate-900">5. Зберігання та безпека</h2>
+            <h2 className="text-lg font-semibold text-slate-900">5. Ваші права та видалення даних</h2>
             <p>
-              Дані зберігаються на серверах проєкту лише доки існує анкета. Після видалення анкети її дані
-              перестають бути публічними. Ми застосовуємо базові технічні заходи захисту, але жоден сайт не може
-              гарантувати абсолютну безпеку передачі даних.
+              Майстер має повне право переглянути, відредагувати, призупинити показ або повністю й безповоротно видалити свою анкету та фотографії в будь-який момент самостійно через Telegram-бота або звернувшись до служби підтримки за адресою{' '}
+              <a href="mailto:support@ihornone.site" className="text-sky-700 underline font-semibold">support@ihornone.site</a>.
+            </p>
+          </section>
+
+          <section className="flex flex-col gap-2">
+            <h2 className="text-lg font-semibold text-slate-900">6. Зберігання даних</h2>
+            <p>
+              Дані обробляються за допомогою розподіленої інфраструктури Cloudflare (D1, R2, Workers). Після видалення анкети картка миттєво зникає з публічного каталогу, а пов'язані медіафайли видаляються.
             </p>
           </section>
         </div>

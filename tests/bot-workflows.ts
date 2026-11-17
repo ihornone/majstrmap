@@ -208,7 +208,7 @@ assert.ok(contactValues(JSON.parse(session(401).data).draft.contacts.telegram).i
 assert.equal(JSON.parse(session(401).data).draft.contacts.instagram,'@chosen');
 await click(401,'master','edit_contacts');await click(401,'reg','skip_contacts');await click(401,'reg','submit');
 await click(999,'admin','approve',{id:String(pending(401).id)});assert.deepEqual(JSON.parse(master(401).contacts),{});
-const siteIcons=['favicon.svg','og-image.svg'];
+const siteIcons=['favicon.svg','og-image.svg','mastermap-logo.svg'];
 assert.deepEqual(CONTACT_KINDS.filter(k=>k!=='phone' && k!=='website').sort(),readdirSync('public').filter(n=>n.endsWith('.svg') && !siteIcons.includes(n)).map(n=>n.replace('.svg','')).sort());
 assert.equal(contactUrl('youtube','@channel'),'https://youtube.com/@channel');
 assert.equal(contactUrl('threads','@handle'),'https://threads.com/@handle');
@@ -284,8 +284,8 @@ assert.equal((await metric('view')).status,204);await metric('view');await metri
 assert.equal((sql.prepare('SELECT COUNT(*) n FROM master_metrics WHERE master_id=?').get(master(401).id) as any).n,2);
 assert.equal((await metric('contact','made_up')).status,400);assert.equal((await metric('view',undefined,'https://evil.test')).status,403);
 await click(401,'master','stats');assert.ok(sent.at(-1).text.includes('Перегляди профілю: 1'));assert.ok(sent.at(-1).text.includes('Натискання контактів: 1'));
-await click(401,'master','free');await click(401,'reg','submit');assert.deepEqual(JSON.parse(master(401).availability),{});
-await click(999,'admin','approve',{id:String(pending(401).id)});assert.equal(availabilityLabel(JSON.parse(master(401).availability)),'Зараз вільний');
+await click(401,'master','free');
+assert.equal(availabilityLabel(JSON.parse(master(401).availability)),'Зараз вільний');
 assert.equal(availabilityLabel({state:'free',date:'2000-01-01'}),null);assert.equal(availabilityLabel({state:'busy_today',date:todayKyiv()}),'Зайнятий сьогодні');
 assert.ok(profileCompleteness({}).percent<100);
 await text(501,`/start save_${master(401).slug}`);assert.equal((sql.prepare('SELECT COUNT(*) n FROM saved_masters').get() as any).n,0);

@@ -23,6 +23,15 @@ export interface ApiReview {
   created_at: string;
 }
 
+export interface ApiPortfolioItem {
+  id: number;
+  title: string;
+  image_key: string;
+  imageUrl?: string;
+  description?: string | null;
+  tag?: string | null;
+}
+
 export interface ApiMaster {
   id: number;
   slug: string;
@@ -45,6 +54,7 @@ export interface ApiMaster {
   status: string;
   services?: ApiMasterService[];
   reviews?: ApiReview[];
+  portfolio?: ApiPortfolioItem[];
 }
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number };
@@ -69,6 +79,18 @@ async function request<T>(
   } catch {
     return { ok: false, status: 0 };
   }
+}
+
+export interface SiteOverviewStats {
+  totalMasters: number;
+  totalVisitors: number;
+  onlineCount: number;
+}
+
+export async function fetchSiteOverviewStats(): Promise<ApiResult<SiteOverviewStats>> {
+  const res = await request<{ ok: boolean; stats?: SiteOverviewStats }>('/api/stats/overview', { cache: 'no-store' });
+  if (!res.ok) return res;
+  return { ok: true, data: res.data.stats || { totalMasters: 0, totalVisitors: 0, onlineCount: 1 } };
 }
 
 export async function fetchRegionStats(): Promise<ApiResult<Record<string, number>>> {

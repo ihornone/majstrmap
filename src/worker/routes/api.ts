@@ -6,6 +6,7 @@ import { CategoriesRepository } from '../db/categories.repo';
 import { MastersRepository } from '../db/masters.repo';
 import { ServicesRepository } from '../db/services.repo';
 import { ReviewsRepository } from '../db/reviews.repo';
+import { PortfolioRepository } from '../db/portfolio.repo';
 import { serveMedia } from '../services/media';
 import { verifyTurnstileToken } from '../services/turnstile';
 
@@ -73,9 +74,18 @@ function toPublicMaster(m: Master, categoryName?: string, priceMin?: number | nu
 }
 
 function toPublicReview(r: Review) {
+  // З міркувань приватності показуємо тільки перше ім'я або першу літеру прізвища (Олександр М.)
+  const rawName = (r.client_name || 'Клієнт').trim();
+  const parts = rawName.split(/\s+/);
+  const first = parts[0] || 'Клієнт';
+  const second = parts[1];
+  const safeName = second && second.length > 0
+    ? `${first} ${second.charAt(0).toUpperCase()}.`
+    : first;
+
   return {
     id: r.id,
-    client_name: r.client_name,
+    client_name: safeName,
     rating: r.rating,
     text: r.text,
     created_at: r.created_at,
@@ -136,6 +146,74 @@ export async function handleApiRequest(request: Request, env: ApiEnv): Promise<R
         'Cache-Control': 'public, s-maxage=3600',
       },
     });
+  }
+
+  if (path === '/api/stats/overview' && request.method === 'GET') {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const onlineThreshold = nowSec - 180; // 3 хвилини
+
+    // 1. Кількість активних майстрів
+    const mastersRow = await env.DB.prepare("SELECT COUNT(*) as c FROM masters WHERE status = 'active'").first<{ c: number }>();
+    const totalMasters = mastersRow?.c ?? 0;
+
+    // 2. Кількість онлайн (користувачі з сигналом активності за останні 3 хв)
+    const onlineRow = await env.DB.prepare("SELECT COUNT(*) as c FROM site_heartbeats WHERE last_seen >= ?").bind(onlineThreshold).first<{ c: number }>();
+    // Завжди як мінімум 1 (той хто робить запит)
+    const onlineCount = Math.max(1, onlineRow?.c ?? 1);
+
+    // 3. Загальна кількість відвідувачів сайту (за весь час)
+    const totalVisitorsRow = await env.DB.prepare("SELECT val FROM site_stats WHERE key = 'total_visitors'").first<{ val: number }>();
+    const totalVisitors = totalVisitorsRow?.val ?? 1;
+
+    return Response.json({
+      ok: true,
+      stats: {
+        totalMasters,
+        totalVisitors,
+        onlineCount,
+      },
+    }, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
+
+  if (path === '/api/stats/heartbeat' && request.method === 'POST') {
+    let visitorId = '';
+    let isNewVisitor = false;
+    try {
+      const data = (await request.json()) as { visitor?: string; isNew?: boolean };
+      visitorId = data.visitor || '';
+      isNewVisitor = Boolean(data.isNew);
+    } catch {}
+
+    if (!visitorId || !/^[a-f0-9-]{36}$/i.test(visitorId)) {
+      return new Response(null, { status: 400 });
+    }
+
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    const statements: D1PreparedStatement[] = [
+      env.DB.prepare('INSERT INTO site_heartbeats (visitor_key, last_seen) VALUES (?, ?) ON CONFLICT(visitor_key) DO UPDATE SET last_seen = ?')
+        .bind(visitorId, nowSec, nowSec),
+    ];
+
+    if (isNewVisitor) {
+      statements.push(
+        env.DB.prepare("UPDATE site_stats SET val = val + 1 WHERE key = 'total_visitors'")
+      );
+    }
+
+    // Періодичне очищення старих записів старше 1 години
+    if (Math.random() < 0.05) {
+      statements.push(
+        env.DB.prepare('DELETE FROM site_heartbeats WHERE last_seen < ?').bind(nowSec - 3600)
+      );
+    }
+
+    await env.DB.batch(statements);
+    return new Response(null, { status: 204 });
   }
 
   if (path === '/api/regions/stats' && request.method === 'GET') {
@@ -263,9 +341,10 @@ export async function handleApiRequest(request: Request, env: ApiEnv): Promise<R
       return Response.json({ ok: false, error: 'Master not found' }, { status: 404 });
     }
 
-    const [services, reviews] = await Promise.all([
+    const [services, reviews, portfolio] = await Promise.all([
       servicesRepo.getByMasterId(master.id),
       reviewsRepo.getByMasterId(master.id, 50),
+      new PortfolioRepository(env.DB).getByMasterId(master.id, true),
     ]);
 
     const category = await new CategoriesRepository(env.DB).getById(master.category_primary);
@@ -275,6 +354,14 @@ export async function handleApiRequest(request: Request, env: ApiEnv): Promise<R
         ...toPublicMaster(master, category?.name, minServicePrice(services)),
         services,
         reviews: reviews.map(toPublicReview),
+        portfolio: portfolio.map((p) => ({
+          id: p.id,
+          title: p.title,
+          image_key: p.image_key,
+          imageUrl: `/api/media/${encodeURI(p.image_key)}`,
+          description: p.description,
+          tag: p.tag,
+        })),
       },
     });
   }

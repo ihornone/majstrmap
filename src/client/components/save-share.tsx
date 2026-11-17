@@ -68,7 +68,7 @@ export function ShareMasterButton({
     const url = `${location.origin}/master/${slug}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: `${name} — MajstrMap`, url });
+        await navigator.share({ title: `${name} — MasterMap`, url });
       } else {
         await navigator.clipboard.writeText(url);
         toast.success('Посилання скопійовано в буфер');

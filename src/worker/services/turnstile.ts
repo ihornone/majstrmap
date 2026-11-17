@@ -15,6 +15,8 @@ interface SiteverifyResponse {
 const ALLOWED_HOSTNAMES = new Set([
   'majstrmap.site',
   'www.majstrmap.site',
+  'mastermap.sbs',
+  'www.mastermap.sbs',
   'majstrmap.majstrmap.workers.dev',
 ]);
 

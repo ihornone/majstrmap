@@ -15,7 +15,14 @@ adminComposer.command('admin',async ctx=>{
   for(const req of requests){
     const master = req.master_id ? await ctx.repos.masters.getById(req.master_id):null;
     const payload = JSON.parse(req.payload);
-    const summary = `Заявка #${req.id} — ${req.type}\n\n` + (req.type==='new_profile'||req.type==='edit_profile' ? profileSummary(payload,master?.telegram_id||0,publicBaseUrl(ctx.env)) : JSON.stringify(payload,null,2));
+    let summary = `Заявка #${req.id} — ${req.type}\n\n`;
+    if (req.type === 'portfolio_item') {
+      summary += `Майстер: ${payload.masterName} (#${payload.masterId})\nРобота: ${payload.title}\n${payload.description ? `Опис: ${payload.description}\n` : ''}Фото: ${publicBaseUrl(ctx.env)}/api/media/${encodeURI(payload.imageKey)}`;
+    } else if (req.type === 'new_profile' || req.type === 'edit_profile') {
+      summary += profileSummary(payload, master?.telegram_id || 0, publicBaseUrl(ctx.env));
+    } else {
+      summary += JSON.stringify(payload, null, 2);
+    }
     for(let i=0;i<summary.length;i+=3500) await ctx.reply(summary.slice(i,i+3500),i+3500>=summary.length ? {reply_markup:new InlineKeyboard().text('✅ Схвалити',packCallback({domain:'admin',action:'approve',id:String(req.id)})).text('❌ Відхилити',packCallback({domain:'admin',action:'reject',id:String(req.id)}))}:{});
   }
   await scheduleNotificationFlush(ctx);
@@ -41,6 +48,32 @@ adminComposer.callbackQuery(/^{"domain":"admin","action":"(approve|reject)"/,asy
     await ctx.editMessageText((ctx.callbackQuery.message?.text || `Категорія #${req.id}`)+`\n\n${approved?'✅ Категорію схвалено':'❌ Категорію відхилено'}`);
     await scheduleNotificationFlush(ctx); return;
   }
+  if (req.type === 'portfolio_item') {
+    const payload = JSON.parse(req.payload);
+    const approved = data?.action === 'approve';
+    const portfolioId = Number(payload.portfolioId);
+    if (portfolioId) {
+      await ctx.repos.portfolio.updateStatus(portfolioId, approved ? 'approved' : 'rejected');
+    }
+    await ctx.repos.admin.resolveRequest(req.id, approved ? 'approved' : 'rejected');
+    if (req.master_id) {
+      const master = await ctx.repos.masters.getById(req.master_id);
+      if (master?.telegram_id) {
+        try {
+          await ctx.api.sendMessage(
+            master.telegram_id,
+            approved
+              ? `✅ <b>Вашу роботу «${payload.title}» схвалено!</b>\nВона вже відображається в портфоліо на сайті.`
+              : `❌ <b>Вашу роботу «${payload.title}» відхилено модератором.</b>\nБудь ласка, переконайтеся, що фото відповідає вимогам безпеки.`,
+            { parse_mode: 'HTML' }
+          );
+        } catch {}
+      }
+    }
+    await ctx.editMessageText((ctx.callbackQuery.message?.text || `Фото роботи #${req.id}`) + `\n\nРішення: ${approved ? '✅ Схвалено й опубліковано' : '❌ Відхилено'}`);
+    return;
+  }
+
   if(req.type!=='new_profile'&&req.type!=='edit_profile'){await ctx.reply('Це стара заявка. Майстер має подати зміни через редагування профілю.');return;}
   const master=req.master_id!=null?await ctx.repos.masters.getById(req.master_id):null;
   if(!master){await ctx.reply('Майстра вже видалено.');return;}

@@ -119,7 +119,7 @@ export function ProjectFooterSection({
               Політика конфіденційності
             </Link>
             <span className="text-slate-400">·</span>
-            <a href="mailto:support@majstrmap.ua" className="hover:text-[#0ea5e9] transition-colors">
+            <a href="mailto:support@ihornone.site" className="hover:text-[#0ea5e9] transition-colors">
               Контакти
             </a>
           </div>
@@ -133,7 +133,7 @@ export function ProjectFooterSection({
 
           <div className="flex items-center gap-4 shrink-0">
             <p className="font-semibold">
-              © 2026 MajstrMap. Усі права захищені.
+              © 2026 MasterMap. Усі права захищені.
             </p>
           </div>
         </div>

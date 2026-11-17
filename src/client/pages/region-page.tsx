@@ -2,8 +2,9 @@ import { BoundedMapTooltip, type MapHover } from '@/components/bounded-map-toolt
 import { SaveMasterButton } from '@/components/save-share';
 import { availabilityLabel } from '../../shared/master-tools';
 import { WorkConditionBadges } from '@/components/work-conditions';
+import { safeLocationDisplay } from '../../shared/safety';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Link, useParams, useNavigate, useSearchParams } from 'react-router';
+import { useParams, useNavigate, useSearchParams } from 'react-router';
 import { REGIONS_DATA } from '@/data/regions';
 import { REGION_CITIES } from '@/data/cities';
 import { fetchMasters, fetchRegionFilters, getAvatarUrl, type ApiMaster, type ApiCategory } from '@/lib/api';
@@ -195,9 +196,9 @@ export function RegionPage() {
 
   useEffect(() => {
     if (region) {
-      document.title = `${region.name} — Майстри на мапі | MajstrMap`;
+      document.title = `${region.name} — Майстри на мапі | MasterMap`;
     } else {
-      document.title = 'Регіон не знайдено | MajstrMap';
+      document.title = 'Регіон не знайдено | MasterMap';
     }
   }, [region]);
 
@@ -483,11 +484,19 @@ export function RegionPage() {
             ) : (
               apiMasters.map((m, idx) => {
                 return (
-                  <Link
+                  <div
                     key={m.id}
-                    to={`/master/${m.slug}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(`/master/${m.slug}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        navigate(`/master/${m.slug}`);
+                      }
+                    }}
                     style={{ animationDelay: `${Math.min(idx * 35, 250)}ms` }}
-                    className="bg-white border border-slate-200 rounded-xl p-3.5 flex flex-col gap-2 shadow-none cursor-pointer shrink-0 hover:border-sky-300 transition-[border-color,transform] duration-150 active:scale-[0.99] animate-in fade-in slide-in-from-bottom-1 duration-200"
+                    className="bg-white border border-slate-200 rounded-xl p-3.5 flex flex-col gap-2 shadow-none cursor-pointer shrink-0 hover:border-sky-300 transition-[border-color,transform] duration-150 active:scale-[0.99] animate-in fade-in slide-in-from-bottom-1 duration-200 text-left focus:outline-hidden focus:ring-2 focus:ring-sky-400"
                   >
                     {/* Верх картки з фото/аватаркою */}
                     <div className="flex items-start justify-between gap-3">
@@ -521,17 +530,17 @@ export function RegionPage() {
                       {m.description}
                     </p>
 
-                    {/* Інфо: місто, досвід, ціна «від» */}
+                    {/* Інфо: місто (безпечне відображення), досвід, ціна «від» */}
                     <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
                       <span className="flex items-center gap-1 font-medium">
                         <MapPin className="w-3 h-3 text-[#0ea5e9]" />
-                        {m.city}
+                        {safeLocationDisplay(m.region_id, m.city, region?.name)}
                       </span>
                       <span>•</span>
                       <span>Досвід: <strong>{formatPlural(m.experience_years, { one: 'рік', few: 'роки', many: 'років' })}</strong></span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center justify-between gap-3" onClick={(e) => e.stopPropagation()}>
                       <p className="text-sm font-semibold text-sky-700">{m.price_min?`Від ${m.price_min} ₴`:'Ціна за домовленістю'}</p>
                       <SaveMasterButton slug={m.slug} compact />
                     </div>
@@ -544,7 +553,7 @@ export function RegionPage() {
                     >
                       <ContactButtons masterId={m.id} slug={m.slug} />
                     </div>
-                  </Link>
+                  </div>
                 );
               })
             )}

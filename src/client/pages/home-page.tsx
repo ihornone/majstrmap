@@ -7,9 +7,11 @@ import type { RegionOverride } from '@/components/shadcnmaps/types';
 import { Navbar } from '@/components/navbar';
 import { BottomBar } from '@/components/bottom-bar';
 import { ProjectFooterSection } from '@/components/project-footer-section';
-import { MapLegend, COLOR_STOPS, ZERO_COUNT_COLOR, TOP_COUNT_COLOR } from '@/components/map-legend';
+import { COLOR_STOPS, ZERO_COUNT_COLOR, TOP_COUNT_COLOR } from '@/components/map-legend';
+import { MapInfoPanel } from '@/components/map-info-panel';
 import { REGIONS_DATA } from '@/data/regions';
-import { fetchRegionStats } from '@/lib/api';
+import { fetchRegionStats, fetchSiteOverviewStats, type SiteOverviewStats } from '@/lib/api';
+import { sendHeartbeat } from '@/lib/engagement';
 
 const HOME_ZOOM_CONFIG = {
   minZoom: 0.8,
@@ -32,8 +34,37 @@ function calculateRegionColor(count: number, maxCount: number): string {
 export function HomePage() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<Record<string, number>>({});
+  const [siteOverview, setSiteOverview] = useState<SiteOverviewStats | null>(null);
   const [statsError, setStatsError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+
+  // Відправка heartbeat при відкритті сторінки та кожні 60 секунд для онлайн-лічильника
+  useEffect(() => {
+    sendHeartbeat();
+    const interval = setInterval(() => {
+      sendHeartbeat();
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Отримання глобальної статистики (майстри, відвідувачі, онлайн)
+  useEffect(() => {
+    let cancelled = false;
+    const loadOverview = () => {
+      fetchSiteOverviewStats().then((res) => {
+        if (!cancelled && res.ok) {
+          setSiteOverview(res.data);
+        }
+      });
+    };
+
+    loadOverview();
+    const timer = setInterval(loadOverview, 30_000); // оновлення кожні 30с
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,10 +136,11 @@ export function HomePage() {
           className="w-full h-full max-h-screen max-w-full"
         />
 
-        { }
-        <MapLegend className="bottom-14 left-4 sm:left-6" maxMasters={maxMasters} />
+        {/* Лівий нижній кут: Єдина гармонійна панель статистики та легенди */}
+        <div className="absolute bottom-14 left-4 sm:left-6 z-20 pointer-events-auto">
+          <MapInfoPanel stats={siteOverview} maxMasters={maxMasters} />
+        </div>
 
-        { }
         {statsError && (
           <div
             role="alert"

@@ -84,6 +84,18 @@ async function handleMint(request: Request, env: Env): Promise<Response> {
 async function route(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
 
+  // Редирект будь-яких запитів (mastermap.sbs, majstrmap.site тощо) на канонічний www.mastermap.sbs
+  if (
+    env.ENVIRONMENT === 'production' &&
+    url.hostname !== 'www.mastermap.sbs' &&
+    (url.hostname === 'mastermap.sbs' || url.hostname.endsWith('majstrmap.site'))
+  ) {
+    const targetUrl = new URL(request.url);
+    targetUrl.hostname = 'www.mastermap.sbs';
+    targetUrl.protocol = 'https:';
+    return Response.redirect(targetUrl.toString(), 301);
+  }
+
   if (url.pathname.startsWith('/api/')) {
     return withSecurityHeaders(await handleApiRequest(request, env));
   }

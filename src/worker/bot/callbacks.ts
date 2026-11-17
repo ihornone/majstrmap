@@ -1,5 +1,5 @@
 export interface BotCallback {
-  domain: 'reg' | 'master' | 'review' | 'admin' | 'cron' | 'client';
+  domain: 'reg' | 'master' | 'review' | 'admin' | 'cron' | 'client' | 'port';
   action: string;
   id?: string;
   val?: string | number;

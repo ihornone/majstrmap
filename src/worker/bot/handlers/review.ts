@@ -2,6 +2,7 @@ import { Composer, InlineKeyboard } from 'grammy';
 import type { BotCustomContext } from '../types';
 import { unpackCallback, packCallback } from '../callbacks';
 import { scheduleNotificationFlush } from '../utils/notifications';
+import { containsSensitiveGeoOrContactInfo } from '../../../shared/safety';
 export const reviewComposer=new Composer<BotCustomContext>();
 reviewComposer.callbackQuery(/^{"domain":"review","action":"(collab_request|collab_confirm)"/,async ctx=>{
   await ctx.answerCallbackQuery();
@@ -53,6 +54,10 @@ reviewComposer.on('message:text',async(ctx,next)=>{
   if(session?.step!=='review_text')return next();
   const text=ctx.message.text.trim();
   if(!text||text.length>2000){await ctx.reply('Відгук має містити від 1 до 2000 символів.');return;}
+  if(containsSensitiveGeoOrContactInfo(text)){
+    await ctx.reply('⚠️ З міркувань безпеки у тексті відгуку заборонено вказувати точні адреси (вулиці, номери будинків чи квартир) та контактні номери. Будь ласка, надішліть відгук без адресних даних.');
+    return;
+  }
   await completeReview(ctx,session.data,text);
 });
 async function completeReview(ctx:BotCustomContext,data:Record<string,any>,text:string|null){

@@ -44,6 +44,18 @@ export interface MasterService {
   created_at: string;
 }
 
+export interface MasterPortfolioItem {
+  id: number;
+  master_id: number;
+  title: string;
+  image_key: string;
+  description?: string | null;
+  tag?: string | null;
+  sort_order: number;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+}
+
 export interface Review {
   id: number;
   master_id: number;
@@ -66,7 +78,7 @@ export interface BotSession {
 
 export interface AdminRequest {
   id: number;
-  type: 'new_category' | 'complaint' | 'new_profile' | 'edit_profile';
+  type: 'new_category' | 'complaint' | 'new_profile' | 'edit_profile' | 'portfolio_item';
   master_id?: number | null;
   payload: string;  
   status: 'pending' | 'approved' | 'rejected';

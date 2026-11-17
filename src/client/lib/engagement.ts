@@ -1,8 +1,40 @@
 import type { ContactKind } from '../../shared/contacts';
+
+export function getOrCreateVisitorId(): { visitor: string; isNew: boolean } {
+  try {
+    let visitor = localStorage.getItem('mastermap-visitor-id');
+    let isNew = false;
+    if (!visitor) {
+      visitor = crypto.randomUUID();
+      localStorage.setItem('mastermap-visitor-id', visitor);
+      isNew = true;
+    }
+    return { visitor, isNew };
+  } catch {
+    return { visitor: '00000000-0000-0000-0000-000000000000', isNew: false };
+  }
+}
+
+export function sendHeartbeat(): void {
+  try {
+    const { visitor, isNew } = getOrCreateVisitorId();
+    const body = JSON.stringify({ visitor, isNew });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/stats/heartbeat', new Blob([body], { type: 'application/json' }));
+    } else {
+      void fetch('/api/stats/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    }
+  } catch {}
+}
+
 export function recordMetric(masterId:number,kind:'view'|'contact',contact?:ContactKind){
   try{
-    let visitor=sessionStorage.getItem('majstrmap-visitor');
-    if(!visitor){visitor=crypto.randomUUID();sessionStorage.setItem('majstrmap-visitor',visitor);}
+    const { visitor } = getOrCreateVisitorId();
     const body=JSON.stringify({masterId,visitor,kind,contact});
     if(navigator.sendBeacon)navigator.sendBeacon('/api/metrics',new Blob([body],{type:'application/json'}));
     else void fetch('/api/metrics',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:true}).catch(()=>{});

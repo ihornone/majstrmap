@@ -2,7 +2,10 @@ import { SaveMasterButton, ShareMasterButton } from '@/components/save-share';
 import { recordMetric } from '@/lib/engagement';
 import { availabilityLabel } from '../../shared/master-tools';
 import { WorkConditionBadges, WorkConditionsDetails } from '@/components/work-conditions';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { safeLocationDisplay } from '../../shared/safety';
+import { MasterPortfolioGallery } from '@/components/portfolio-gallery';
+import { getPortfolioForCategory } from '@/data/portfolio';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { REGIONS_DATA } from '@/data/regions';
 import { fetchMasterBySlug, type ApiMaster } from '@/lib/api';
@@ -87,14 +90,31 @@ export function MasterPage() {
 
   const retryLoad = useCallback(() => setReloadKey((k) => k + 1), []);
 
+  const portfolioItems = useMemo(() => {
+    if (master?.portfolio && master.portfolio.length > 0) {
+      return master.portfolio.map((p) => ({
+        id: String(p.id),
+        title: p.title,
+        category: master.category_primary,
+        imageUrl: p.imageUrl || `/api/media/${encodeURI(p.image_key)}`,
+        description: p.description || undefined,
+        tag: p.tag || undefined,
+      }));
+    }
+    if (master?.category_primary) {
+      return getPortfolioForCategory(master.category_primary);
+    }
+    return [];
+  }, [master?.portfolio, master?.category_primary]);
+
   useEffect(() => {
     if (loading) return;
     if (master) {
-      document.title = `${master.name} — ${master.category_primary_name || master.category_primary} у м. ${master.city} | MajstrMap`;
+      document.title = `${master.name} — ${master.category_primary_name || master.category_primary} у м. ${master.city} | MasterMap`;
     } else {
       document.title = failure === 'error'
-        ? 'Помилка завантаження | MajstrMap'
-        : 'Майстра не знайдено | MajstrMap';
+        ? 'Помилка завантаження | MasterMap'
+        : 'Майстра не знайдено | MasterMap';
     }
   }, [master, loading, failure]);
 
@@ -202,8 +222,8 @@ export function MasterPage() {
                 <div className="flex items-start gap-1 font-medium basis-full sm:basis-auto order-3 sm:order-none min-w-0">
                   <MapPin className="w-3.5 h-3.5 text-[#0ea5e9] shrink-0" />
                   <span>
-                    {master.city}
-                    {region ? `, ${region.name}` : ''}
+                    {safeLocationDisplay(master.region_id, master.city, region?.name)}
+                    {region && !safeLocationDisplay(master.region_id, master.city, region?.name).includes(region.name) ? `, ${region.name}` : ''}
                   </span>
                 </div>
                 <span className="hidden sm:inline">•</span>
@@ -228,7 +248,10 @@ export function MasterPage() {
             </div>
           </div>
 
-          { }
+          {/* Галерея виконаних робіт майстра (над відгуками) */}
+          <MasterPortfolioGallery items={portfolioItems} masterName={master.name} />
+
+          {/* Блок відгуків */}
           <div className="w-full bg-white border border-slate-200 rounded-xl p-4 sm:p-8 shadow-none flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">

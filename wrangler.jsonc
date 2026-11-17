@@ -4,7 +4,7 @@
   "main": "src/worker/index.ts",
   "compatibility_date": "2025-12-01",
   "compatibility_flags": ["nodejs_compat"],
-  "account_id": "e37e774efbbf8c32fb3e6caf580b3989",
+  "account_id": "0060387267abf92ca3e535dce10f02aa",
   "assets": {
     "directory": "./dist/client",
     "binding": "ASSETS",
@@ -14,8 +14,14 @@
     {
       "binding": "DB",
       "database_name": "majstrmap-db",
-      "database_id": "5a4c0e20-1651-4664-9a22-d73efe62f85e",
+      "database_id": "7efeb942-f6a6-4986-aa84-d89e56c17543",
       "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "mastermap-media"
     }
   ],
   "ratelimits": [
@@ -42,12 +48,14 @@
     ]
   },
   "routes": [
+    { "pattern": "www.mastermap.sbs", "custom_domain": true },
+    { "pattern": "mastermap.sbs", "custom_domain": true },
     { "pattern": "www.majstrmap.site", "custom_domain": true },
     { "pattern": "majstrmap.site", "custom_domain": true }
   ],
   "vars": {
     "ENVIRONMENT": "production",
-    "PUBLIC_BASE_URL": "https://www.majstrmap.site",
+    "PUBLIC_BASE_URL": "https://www.mastermap.sbs",
     "TELEGRAM_CHANNEL_USERNAME": "@ihornone_official",
     "ADMIN_TELEGRAM_IDS": "8331424769"
   }

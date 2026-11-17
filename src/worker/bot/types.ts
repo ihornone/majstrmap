@@ -7,6 +7,7 @@ import type { CategoriesRepository } from '../db/categories.repo';
 import type { SessionsRepository } from '../db/sessions.repo';
 import type { AdminRepository } from '../db/admin.repo';
 import type { ClientRepository } from '../db/client.repo';
+import type { PortfolioRepository } from '../db/portfolio.repo';
 
 export interface BotCustomContext extends Context {
   env: Env;
@@ -19,5 +20,6 @@ export interface BotCustomContext extends Context {
     sessions: SessionsRepository;
     admin: AdminRepository;
     client: ClientRepository;
+    portfolio: PortfolioRepository;
   };
 }

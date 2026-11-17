@@ -1,4 +1,4 @@
-export const BOT_URL = 'https://t.me/majstrmap_bot';
+export const BOT_URL = 'https://t.me/mastermap_ua_bot';
 export const CHANNEL_URL = 'https://t.me/ihornone_official';
 export const PORTFOLIO_URL = 'https://t.me/ihornone_portfolio';
 

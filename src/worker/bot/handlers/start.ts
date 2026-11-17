@@ -1,6 +1,6 @@
 import { Composer, InlineKeyboard } from 'grammy';
 import type { BotCustomContext } from '../types';
-import { masterMainMenuKeyboard, ratingKeyboard } from '../keyboards';
+import { masterMainMenuKeyboard, masterQuickReplyKeyboard, ratingKeyboard } from '../keyboards';
 import { packCallback } from '../callbacks';
 import { publicBaseUrl } from '../../config';
 
@@ -78,18 +78,21 @@ startComposer.command('start', async (ctx) => {
     await ctx.reply(
       `👋 Вітаємо, ${existingMaster.name}!\n` +
       `Ви зареєстровані на Мапі майстрів України як ${existingMaster.city} (${existingMaster.status === 'active' ? '🟢 Опубліковано' : '🟡 Приховано'}).\n\n` +
-      `Оберіть дію в меню:`,
+      `Оберіть дію в меню або скористайтеся кнопками знизу:`,
       {
-        reply_markup: masterMainMenuKeyboard(),
+        reply_markup: masterQuickReplyKeyboard(),
       }
     );
+    await ctx.reply(`Головне меню майстра:`, {
+      reply_markup: masterMainMenuKeyboard(),
+    });
     return;
   }
 
   const welcomeKb = new InlineKeyboard()
-    .text('🚀 Зареєструватися майстром', packCallback({ domain: 'reg', action: 'start' }))
+    .text('🚀 Зареєструватися майстром', packCallback({ domain: 'reg', action: 'start' })).success()
     .row()
-    .url('🗺 Відкрити мапу на сайті', publicBaseUrl(ctx.env));
+    .url('🗺 Відкрити мапу на сайті', publicBaseUrl(ctx.env)).primary();
 
   await ctx.reply(
     `🇺🇦 Мапа майстрів України\n\n` +

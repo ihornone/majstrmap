@@ -31,6 +31,10 @@ export class AdminRepository {
     return this.db.prepare("SELECT * FROM admin_requests WHERE master_id=? AND type IN ('new_profile','edit_profile') ORDER BY id DESC LIMIT 1").bind(masterId).first<AdminRequest>();
   }
   async getById(id: number) { return this.db.prepare('SELECT * FROM admin_requests WHERE id = ?').bind(id).first<AdminRequest>(); }
+  async resolveRequest(id: number, status: 'approved' | 'rejected'): Promise<boolean> {
+    const res = await this.db.prepare("UPDATE admin_requests SET status = ? WHERE id = ? AND status = 'pending'").bind(status, id).run();
+    return (res.meta.changes ?? 0) > 0;
+  }
   async submitProfile(masterId: number, type: 'new_profile' | 'edit_profile', draft: ProfileDraft): Promise<AdminRequest> {
     const result = await this.db.batch<AdminRequest>([
       this.db.prepare("UPDATE admin_requests SET status = 'rejected' WHERE master_id = ? AND type IN ('new_profile','edit_profile') AND status = 'pending'").bind(masterId),
